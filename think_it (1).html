@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🧠 فِكّرها | THINK IT!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Cairo', 'sans-serif'] },
+                    colors: {
+                        primary: '#6d28d9', // Purple
+                        secondary: '#ec4899', // Pink
+                        dark: '#0f172a',
+                        darker: '#020617',
+                        accent: '#f59e0b'
+                    },
+                    animation: {
+                        'bounce-slight': 'bounceSlight 1s infinite',
+                        'pulse-fast': 'pulse 0.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 3s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        bounceSlight: {
+                            '0%, 100%': { transform: 'translateY(-5%)' },
+                            '50%': { transform: 'translateY(0)' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #020617;
+            color: white;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: pan-y; /* Prevent pinch zoom but allow scrolling if needed */
+        }
+        
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .gradient-text {
+            background: linear-gradient(to right, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6d28d9, #be185d);
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+        .btn-primary:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 5px rgba(236, 72, 153, 0.4);
+        }
+
+        /* Wheel Styles */
+        .wheel-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(168, 85, 247, 0.5);
+            overflow: hidden;
+            border: 4px solid white;
+        }
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            transition: transform 4s cubic-bezier(0.175, 0.885, 0.32, 1);
+            position: relative;
+        }
+        .wheel-slice {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: white;
+            clip-path: polygon(0 0, 100% 0, 100% 100%);
+        }
+        .wheel-text {
+            position: absolute;
+            transform: rotate(45deg) translateY(-40px); /* Adjust based on slice logic */
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            white-space: nowrap;
+        }
+        .wheel-pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; 
+            height: 0; 
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 30px solid #f59e0b;
+            z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+
+        /* Confetti */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            animation: fall linear forwards;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        @keyframes fall {
+            to { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Drawing Canvas */
+        #draw-canvas {
+            touch-action: none; /* Crucial for drawing on mobile */
+            background-color: white;
+            border-radius: 0.5rem;
+            cursor: crosshair;
+        }
+
+        /* Animations */
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .slide-up { animation: slideUp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* Custom Scrollbar for scoreboard */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #6d28d9; border-radius: 3px; }
+    </style>
+</head>
+<body class="antialiased flex flex-col h-screen overflow-hidden text-center select-none" id="app-root">
+
+    <!-- Main Container -->
+    <div id="main-content" class="flex-1 w-full max-w-md mx-auto relative h-full flex flex-col pt-4 pb-6 px-4 overflow-y-auto">
+        <!-- Dynamic Content Injected Here -->
+    </div>
+
+    <!-- Modal Overlay Container -->
+    <div id="modal-container" class="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center hidden p-4 fade-in">
+        <!-- Modal Content Injected Here -->
+    </div>
+
+<script>
+    // --- Data & Localization ---
+    const i18n = {
+        ar: {
+            title: "فِكّرها",
+            subtitle: "اللعبة اللي كل مرة بتطلعلكم حاجة جديدة 😈",
+            play: "يلا نلعب 🔥",
+            randomGame: "لعبة عشوائية 🎲",
+            playersBtn: "اللاعبين 👥",
+            settingsBtn: "الإعدادات ⚙️",
+            whoPlays: "مين هيلعب؟ 👥",
+            playerName: "اسم اللاعب...",
+            add: "إضافة",
+            start: "ابدأ 🚀",
+            needPlayers: "لازم لاعبين أو أكتر عشان نلعب!",
+            settingsTitle: "الإعدادات ⚙️",
+            language: "اللغة 🌍",
+            sound: "الصوت 🔊",
+            aiMode: "وضع الذكاء الاصطناعي 🤖",
+            save: "حفظ",
+            back: "رجوع",
+            gamesTitle: "اختار لعبة 🎮",
+            difficultyTitle: "اختار الصعوبة 🧠",
+            easy: "سهل 🟢",
+            medium: "متوسط 🟡",
+            hard: "صعب 🔴",
+            whoAnswers: "🎡 مين هيجاوب؟",
+            spin: "لف العجلة!",
+            turn: "الدور على",
+            passPhone: "📱 سلّم الموبايل لـ",
+            ready: "لما تكون جاهز دوس متابعة",
+            continue: "متابعة",
+            score: "النقاط 🏆",
+            aiLoading: "🤖 استنى كده... الـAI بيحضّرلكم الجولة 😈",
+            aiFallback: "🤖 هنكمل بالجولات الجاهزة!",
+            timeUp: "الوقت خلص! ⏱️",
+            correct: "إجابة جامدة 🔥",
+            wrong: "للأسف المرة دي لأ 😅",
+            next: "التالي",
+            howToPlay: "طريقة اللعب",
+            startGame: "ابدأ اللعب",
+            pointsFast: "سرعة رهيبة! 🔥",
+            pointsNormal: "عاش! 👍",
+            pointsSlow: "بالعافية! 😅",
+            gameOver: "النتيجة النهائية 🏆",
+            loser: "😈 أقل واحد في النقاط",
+            consequenceWheel: "عجلة العواقب 🎡",
+            anotherConsequence: "🔄 عاقبة تانية",
+            skip: "⏭️ تخطي",
+            playAgain: "🔥 العب مرة تانية",
+            mainMenu: "🏠 القائمة الرئيسية",
+            // Game Names
+            g1: "فِكّرها",
+            g2: "مين بيكدب؟",
+            g3: "ارسمها وخمّنها",
+            g4: "كلمة في ثانية",
+            g5: "مين شافها؟",
+            g6: "اضغط!",
+            g7: "مين أنا؟",
+            g8: "لا تقولها!",
+            g9: "الحظ المجنون",
+            g10: "آخر واحد واقف"
+        },
+        en: {
+            title: "THINK IT",
+            subtitle: "The game that always surprises you 😈",
+            play: "Play Now 🔥",
+            randomGame: "Random Game 🎲",
+            playersBtn: "Players 👥",
+            settingsBtn: "Settings ⚙️",
+            whoPlays: "Who's playing? 👥",
+            playerName: "Player name...",
+            add: "Add",
+            start: "Start 🚀",
+            needPlayers: "Need 2 or more players!",
+            settingsTitle: "Settings ⚙️",
+            language: "Language 🌍",
+            sound: "Sound 🔊",
+            aiMode: "AI Mode 🤖",
+            save: "Save",
+            back: "Back",
+            gamesTitle: "Choose a Game 🎮",
+            difficultyTitle: "Select Difficulty 🧠",
+            easy: "Easy 🟢",
+            medium: "Medium 🟡",
+            hard: "Hard 🔴",
+            whoAnswers: "🎡 Who's answering?",
+            spin: "Spin!",
+            turn: "It's turn for",
+            passPhone: "📱 Pass phone to",
+            ready: "Press continue when ready",
+            continue: "Continue",
+            score: "Score 🏆",
+            aiLoading: "🤖 Wait... AI is cooking 😈",
+            aiFallback: "🤖 Using offline mode!",
+            timeUp: "Time's up! ⏱️",
+            correct: "Awesome! 🔥",
+            wrong: "Not this time 😅",
+            next: "Next",
+            howToPlay: "How to Play",
+            startGame: "Start Game",
+            pointsFast: "Super fast! 🔥",
+            pointsNormal: "Good job! 👍",
+            pointsSlow: "Barely! 😅",
+            gameOver: "Final Results 🏆",
+            loser: "😈 Lowest score goes to",
+            consequenceWheel: "Wheel of Consequences 🎡",
+            anotherConsequence: "🔄 Spin Again",
+            skip: "⏭️ Skip",
+            playAgain: "🔥 Play Again",
+            mainMenu: "🏠 Main Menu",
+            g1: "Think It",
+            g2: "Who's Lying?",
+            g3: "Draw It",
+            g4: "Word in a Second",
+            g5: "Who Saw It?",
+            g6: "Press!",
+            g7: "Who Am I?",
+            g8: "Taboo",
+            g9: "Crazy Luck",
+            g10: "Last Man Standing"
+        }
+    };
+
+    // Consequences Fallback (Safe & Family Friendly)
+    const consequencesList = {
+        ar: [
+            "🤖 اتكلم زي الروبوت لمدة 30 ثانية.",
+            "🐱 اعمل صوت قطة ومواء 3 مرات.",
+            "🐶 انهج واعمل صوت كلب.",
+            "🎭 مثّل مشهد إنك بتاكل ليمونة حامضة.",
+            "🎤 اعمل إعلان مضحك للموبايل اللي في إيدك.",
+            "😂 حاول ما تضحكش واللاعبين بيعملوا حركات بوجههم لمدة 20 ثانية.",
+            "📰 مثّل إنك مذيع أخبار بيقرأ خبر غريب.",
+            "👽 اتكلم لغة فضائية مش مفهومة لمدة 15 ثانية.",
+            "🎬 مثّل إنك بتبكي درامياً على حاجة تافهة.",
+            "🗣️ اتكلم كأنك معلق رياضي على حركة لاعب تاني.",
+            "😱 مثّل إنك شفت شبح.",
+            "🎮 مثّل إنك بتلعب لعبة صعبة جداً وبتخسر.",
+            "🧠 قول 5 كلمات تبدأ بحرف 'م' في 5 ثواني.",
+            "🎨 ارسم شكل في الهوا والناس تخمنه.",
+            "🐸 نُط زي الضفدع مرتين.",
+            "🤖 الجولة الجاية كلها اتكلم بصوت تخين.",
+            "🎭 مثّل إنك شيف بيطبخ أكلة وهمية.",
+            "🎤 غني أغنية أطفال مشهورة.",
+            "📰 اخترع خبر عاجل مضحك عن واحد من اللاعبين.",
+            "😂 اوقف على رجل واحدة لمدة 15 ثانية.",
+            "🎬 مثّل مشهد حركة بطيء (Slow Motion).",
+            "🗣️ اتكلم ببطء شديد جداً لمدة نص دقيقة.",
+            "⚡ قول جملة طويلة بسرعة جداً من غير ما تتلخبط.",
+            "👀 غمض عينك واوصف لبس اللاعب اللي جنبك.",
+            "🎙️ قدّم نفسك كأنك نجم مشهور بيستلم جايزة.",
+            "🧑‍🏫 اشرح إزاي نشرب مية كأنك مدرس علوم.",
+            "😎 امدح كل لاعب بصفة حلوة.",
+            "🚶 امشى في المكان كأنك عارض أزياء.",
+            "😴 مثّل إنك بتنام وبتشخر.",
+            "🕺 اعمل حركة رقص مضحكة.",
+            "🤐 ممنوع تتكلم خالص لحد دورك الجاي (استخدم إشارات)."
+        ],
+        en: [
+            "🤖 Talk like a robot for 30 seconds.",
+            "🐱 Meow like a cat 3 times.",
+            "🐶 Bark like a dog.",
+            "🎭 Act like you're eating a sour lemon.",
+            "🎤 Make a funny commercial for the phone.",
+            "😂 Try not to laugh while others make faces for 20s.",
+            "📰 Act like a news anchor reading weird news.",
+            "👽 Speak an alien language for 15 seconds.",
+            "🎬 Cry dramatically over something silly.",
+            "🗣️ Be a sports commentator for another player's actions.",
+            "😱 Act like you just saw a ghost.",
+            "🎮 Act like you're losing a hard video game.",
+            "🧠 Say 5 words starting with 'M' in 5 seconds.",
+            "🎨 Draw something in the air for others to guess.",
+            "🐸 Hop like a frog twice.",
+            "🤖 Speak with a deep voice next round.",
+            "🎭 Act like a chef cooking an invisible meal.",
+            "🎤 Sing a popular nursery rhyme.",
+            "📰 Make up a breaking funny news about a player.",
+            "😂 Stand on one leg for 15 seconds.",
+            "🎬 Act in slow motion.",
+            "🗣️ Speak very slowly for 30 seconds.",
+            "⚡ Say a long sentence super fast.",
+            "👀 Close eyes and describe the next player's clothes.",
+            "🎙️ Accept an imaginary award like a star.",
+            "🧑‍🏫 Explain how to drink water like a science teacher.",
+            "😎 Give a compliment to every player.",
+            "🚶 Walk like a fashion model.",
+            "😴 Act like you're falling asleep and snoring.",
+            "🕺 Do a funny dance move.",
+            "🤐 Don't speak until your next turn (use gestures)."
+        ]
+    };
+
+    // Pre-made challenges if AI fails
+    const fallbackGames = {
+        g1: { // Think It (Trivia/Riddles)
+            ar: {
+                easy: [
+                    { q: "حاجة بتشوفها كل يوم في السما بالليل، إيه هي؟", a: "القمر" },
+                    { q: "لونه أصفر وطويل وبيحبه القرد، إيه هو؟", a: "الموز" }
+                ],
+                medium: [
+                    { q: "عنده أسنان كتير بس مش بيعض، إيه هو؟", a: "المشط" },
+                    { q: "كل ما زاد، كل ما قل اللي بتشوفه، إيه هو؟", a: "الضباب" }
+                ],
+                hard: [
+                    { q: "شيء بيملك مدن بس مافيش بيوت، أنهار بس مافيش مياه، إيه هو؟", a: "الخريطة" },
+                    { q: "بيطير من غير أجنحة، وبيعيط من غير عيون، إيه هو؟", a: "السحاب" }
+                ]
+            }
+        },
+        g8: { // Taboo
+            ar: {
+                easy: [{ target: "مدرسة", forbidden: ["طالب", "مدرس", "فصل", "تعليم"] }],
+                medium: [{ target: "انترنت", forbidden: ["كمبيوتر", "موبايل", "واي فاي", "نت"] }],
+                hard: [{ target: "جاذبية", forbidden: ["أرض", "سقوط", "تفاحة", "نيوتن"] }]
+            }
+        }
+        // Other games have programmatic fallbacks inside their specific logic
+    };
+
+    const gamesList = [
+        { id: 'g1', icon: '🧠' }, { id: 'g2', icon: '🤥' }, { id: 'g3', icon: '🎨' },
+        { id: 'g4', icon: '🔤' }, { id: 'g5', icon: '👀' }, { id: 'g6', icon: '⚡' },
+        { id: 'g7', icon: '🎭' }, { id: 'g8', icon: '🙊' }, { id: 'g9', icon: '🎲' },
+        { id: 'g10', icon: '🏆' }
+    ];
+
+    // State Management
+    let state = {
+        view: 'home', // home, players, difficulty, games, wheel, pass, gameActive, scorePopup, scoreboard, consequence, end
+        lang: localStorage.getItem('thinkit_lang') || 'ar',
+        settings: {
+            sound: localStorage.getItem('thinkit_sound') !== 'false',
+            aiEnabled: localStorage.getItem('thinkit_ai') !== 'false'
+        },
+        players: [], // { name, score, id, hearts }
+        currentPlayerIndex: -1,
+        selectedGame: null,
+        difficulty: 'medium', // easy, medium, hard
+        round: 1,
+        gameData: null, // Temporary data for active game
+        history: { usedQs: [] }
+    };
+
+    function t(key) { return i18n[state.lang][key] || key; }
+    
+    // --- Audio System (Synthesizer) ---
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playSound(type) {
+        if (!state.settings.sound) return;
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        
+        const osc = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        osc.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        
+        switch(type) {
+            case 'click':
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(300, now + 0.1);
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+                break;
+            case 'spin':
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, now);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.05);
+                osc.start(now); osc.stop(now + 0.05);
+                break;
+            case 'correct':
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.setValueAtTime(600, now + 0.1);
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+                break;
+            case 'wrong':
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+                break;
+            case 'tick':
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, now);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now); osc.stop(now + 0.05);
+                break;
+            case 'win':
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.setValueAtTime(500, now + 0.1);
+                osc.frequency.setValueAtTime(600, now + 0.2);
+                osc.frequency.setValueAtTime(800, now + 0.3);
+                gainNode.gain.setValueAtTime(0.5, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.6);
+                osc.start(now); osc.stop(now + 0.6);
+                break;
+        }
+    }
+
+    // --- Core Logic ---
+    function setLang(lang) {
+        state.lang = lang;
+        localStorage.setItem('thinkit_lang', lang);
+        document.documentElement.lang = lang;
+        document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+        render();
+    }
+
+    function changeView(newView, data = null) {
+        playSound('click');
+        if (window.activeGameTimer) {
+            clearInterval(window.activeGameTimer);
+            window.activeGameTimer = null;
+        }
+        if(data) Object.assign(state, data);
+        state.view = newView;
+        render();
+    }
+
+    function addPlayer(name) {
+        if(name.trim() && state.players.length < 6) {
+            state.players.push({ id: Date.now(), name: name.trim(), score: 0, hearts: 3 });
+            playSound('correct');
+            render();
+        }
+    }
+    
+    function removePlayer(index) {
+        state.players.splice(index, 1);
+        playSound('click');
+        render();
+    }
+
+    async function getAIContent(gameId, difficulty) {
+        if (!state.settings.aiEnabled) return null;
+        
+        const apiKey = ""; // Gemini API requires this empty in canvas
+        if(apiKey === undefined) return null;
+
+        const prompts = {
+            g1: `Generate a short, fun riddle in ${state.lang === 'ar' ? 'Egyptian Arabic (العامية المصرية)' : 'English'} for a party game. Difficulty: ${difficulty}. Return ONLY valid JSON format: {"q": "the riddle question", "a": "short answer"}. Do not use markdown tags.`,
+            g8: `Generate a Taboo game card in ${state.lang === 'ar' ? 'Egyptian Arabic' : 'English'}. Difficulty: ${difficulty}. Target word to guess, and array of 4 forbidden words. Return ONLY valid JSON: {"target": "word", "forbidden": ["w1","w2","w3","w4"]}. No markdown.`,
+            g4: `Generate a category and one forbidden letter in ${state.lang === 'ar' ? 'Egyptian Arabic' : 'English'} for a fast-paced naming game. Difficulty: ${difficulty}. Return ONLY JSON: {"category": "e.g., Animals", "forbiddenLetter": "e.g., m"}. No markdown.`,
+            g7: `Generate a secret identity (famous person, animal, or object) for a 'Who Am I' game in ${state.lang === 'ar' ? 'Egyptian Arabic' : 'English'}. Difficulty: ${difficulty}. Return ONLY JSON: {"identity": "the secret identity"}. No markdown.`
+        };
+
+        const prompt = prompts[gameId];
+        if(!prompt) return null; // Fallback for games that don't strictly need AI (like reaction or random memory)
+
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: prompt }] }],
+                    generationConfig: { temperature: 0.8 }
+                })
+            });
+            const data = await response.json();
+            const text = data.candidates[0].content.parts[0].text;
+            // Clean up potential markdown formatting from AI response
+            const cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+            return JSON.parse(cleanedText);
+        } catch (e) {
+            console.error("AI Error:", e);
+            return null; // Trigger fallback
+        }
+    }
+
+    async function prepareGame(gameId) {
+        state.selectedGame = gameId;
+        changeView('wheel'); // Spin to select player
+    }
+
+    function onPlayerSelected(playerIndex) {
+        state.currentPlayerIndex = playerIndex;
+        setTimeout(() => {
+            changeView('pass', { targetPlayer: state.players[playerIndex].name });
+        }, 1500);
+    }
+
+    async function launchSelectedGame() {
+        changeView('loading');
+        
+        // Fetch AI content or use fallback
+        let content = await getAIContent(state.selectedGame, state.difficulty);
+        
+        if (!content) {
+            // Fallback logic
+            const fbg = fallbackGames[state.selectedGame]?.[state.lang]?.[state.difficulty];
+            if (fbg) {
+                content = fbg[Math.floor(Math.random() * fbg.length)];
+            } else {
+                // Programmatic fallbacks for other games
+                if(state.selectedGame === 'g4') content = { category: state.lang==='ar'?"حيوانات":"Animals", forbiddenLetter: state.lang==='ar'?"م":"a" };
+                if(state.selectedGame === 'g7') content = { identity: state.lang==='ar'?"أسد":"Lion" };
+                if(state.selectedGame === 'g2') content = { }; // specific logic inside game
+            }
+        }
+        
+        state.gameData = content;
+        changeView('howToPlay');
+    }
+
+    // Score calculation based on speed
+    function calculateScore(timeLeft, totalTime, isCorrect) {
+        if(!isCorrect) return { points: 0, text: t('wrong') };
+        
+        const ratio = timeLeft / totalTime;
+        let points = 0;
+        let text = "";
+        
+        const base = state.difficulty === 'easy' ? 40 : (state.difficulty === 'medium' ? 60 : 80);
+        const bonusMax = state.difficulty === 'easy' ? 40 : (state.difficulty === 'medium' ? 40 : 20);
+
+        points = Math.floor(base + (ratio * bonusMax));
+
+        if(ratio > 0.7) text = t('pointsFast');
+        else if(ratio > 0.3) text = t('pointsNormal');
+        else text = t('pointsSlow');
+
+        return { points, text: `+${points} ⭐ - ${text}` };
+    }
+
+    function finishRound(points, message) {
+        if(points > 0) {
+            state.players[state.currentPlayerIndex].score += points;
+            playSound('correct');
+        } else {
+            playSound('wrong');
+        }
+        
+        showScorePopup(message, () => {
+            changeView('scoreboard');
+        });
+    }
+
+    function render() {
+        const root = document.getElementById('main-content');
+        root.innerHTML = '';
+        
+        // Top Bar (Settings / Back / Exit)
+        if(state.view !== 'home' && state.view !== 'loading' && state.view !== 'gameActive') {
+            const topBar = document.createElement('div');
+            topBar.className = 'w-full flex justify-start items-center mb-4 z-50';
+            
+            const backBtn = document.createElement('button');
+            backBtn.className = 'text-gray-400 text-3xl p-2 hover:scale-110 transition drop-shadow-md';
+            
+            const isGameLoop = ['wheel', 'pass', 'howToPlay', 'consequence', 'scoreboard'].includes(state.view);
+            backBtn.innerHTML = isGameLoop ? '🚪' : '⬅️';
+            
+            backBtn.onclick = () => {
+                if (isGameLoop) {
+                    if (confirm(state.lang === 'ar' ? 'متأكد إنك عايز تخرج وتختار لعبة تانية؟' : 'Are you sure you want to exit and choose another game?')) {
+                        changeView('games');
+                    }
+                } else {
+                    changeView('home');
+                }
+            };
+            topBar.appendChild(backBtn);
+            root.appendChild(topBar);
+        }
+
+        // View Router
+        switch (state.view) {
+            case 'home': renderHome(root); break;
+            case 'settings': renderSettings(root); break;
+            case 'players': renderPlayers(root); break;
+            case 'games': renderGamesMenu(root); break;
+            case 'wheel': renderWheel(root); break;
+            case 'pass': renderPassPhone(root); break;
+            case 'loading': renderLoading(root); break;
+            case 'howToPlay': renderHowToPlay(root); break;
+            case 'gameActive': renderActiveGame(root); break;
+            case 'scoreboard': renderScoreboard(root); break;
+            case 'consequence': renderConsequence(root); break;
+        }
+    }
+
+    function renderHome(container) {
+        container.innerHTML = `
+            <div class="flex-1 flex flex-col items-center justify-center space-y-8 slide-up">
+                <div class="text-center">
+                    <div class="text-7xl mb-4 animate-bounce-slight">🧠</div>
+                    <h1 class="text-5xl font-black mb-2 gradient-text font-sans tracking-tight">${t('title')}</h1>
+                    <p class="text-gray-400 text-sm px-4">${t('subtitle')}</p>
+                </div>
+                
+                <div class="flex flex-col w-full px-8 space-y-4">
+                    <button onclick="changeView('players')" class="btn-primary text-white font-bold py-4 px-8 rounded-2xl text-2xl w-full flex items-center justify-center gap-3">
+                        ${t('play')}
+                    </button>
+                    
+                    <div class="grid grid-cols-2 gap-4 w-full">
+                        <button onclick="changeView('settings')" class="glass-panel py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-800 transition">
+                            ${t('settingsBtn')}
+                        </button>
+                        <button onclick="alert('Tutorial coming soon!')" class="glass-panel py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-800 transition">
+                            📖 مساعدة
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderSettings(container) {
+        container.innerHTML = `
+            <div class="slide-up w-full max-w-sm mx-auto">
+                <h2 class="text-3xl font-bold text-center mb-8">${t('settingsTitle')}</h2>
+                
+                <div class="space-y-6 glass-panel p-6 rounded-2xl">
+                    <div class="flex justify-between items-center">
+                        <span class="text-lg">${t('language')}</span>
+                        <div class="flex gap-2">
+                            <button onclick="setLang('ar')" class="${state.lang === 'ar' ? 'bg-primary' : 'bg-gray-700'} px-4 py-2 rounded-lg font-bold">عربي</button>
+                            <button onclick="setLang('en')" class="${state.lang === 'en' ? 'bg-primary' : 'bg-gray-700'} px-4 py-2 rounded-lg font-bold">EN</button>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center">
+                        <span class="text-lg">${t('sound')}</span>
+                        <input type="checkbox" ${state.settings.sound ? 'checked' : ''} onchange="state.settings.sound = this.checked; localStorage.setItem('thinkit_sound', this.checked); playSound('click');" class="w-6 h-6 accent-primary">
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <span class="text-lg">${t('aiMode')}</span>
+                        <input type="checkbox" ${state.settings.aiEnabled ? 'checked' : ''} onchange="state.settings.aiEnabled = this.checked; localStorage.setItem('thinkit_ai', this.checked); playSound('click');" class="w-6 h-6 accent-primary">
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderPlayers(container) {
+        container.innerHTML = `
+            <div class="flex flex-col h-full w-full max-w-sm mx-auto slide-up">
+                <h2 class="text-3xl font-bold text-center mb-6">${t('whoPlays')}</h2>
+                
+                <div class="flex gap-2 mb-6">
+                    <input type="text" id="p-name" placeholder="${t('playerName')}" class="flex-1 bg-gray-800 border border-gray-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-primary" onkeypress="if(event.key === 'Enter') addPlayer(this.value)">
+                    <button onclick="addPlayer(document.getElementById('p-name').value); document.getElementById('p-name').value='';" class="bg-primary px-6 rounded-xl font-bold">${t('add')}</button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto space-y-3 mb-6" id="players-list">
+                    ${state.players.map((p, i) => `
+                        <div class="glass-panel p-4 rounded-xl flex justify-between items-center fade-in">
+                            <span class="font-bold text-xl">${p.name}</span>
+                            <button onclick="removePlayer(${i})" class="text-red-400 text-xl w-8 h-8 flex items-center justify-center rounded-full bg-red-400/10 hover:bg-red-400/30">×</button>
+                        </div>
+                    `).join('')}
+                    ${state.players.length === 0 ? `<p class="text-gray-500 text-center mt-10">ضيف أصحابك عشان نبدأ!</p>` : ''}
+                </div>
+                
+                <button onclick="if(state.players.length >= 2) changeView('games'); else alert('${t('needPlayers')}');" class="btn-primary w-full py-4 rounded-xl font-bold text-xl ${state.players.length < 2 ? 'opacity-50 cursor-not-allowed' : ''}">
+                    ${t('start')}
+                </button>
+            </div>
+        `;
+    }
+
+    function renderGamesMenu(container) {
+        let diffSelector = `
+            <div class="flex justify-between bg-gray-800 p-2 rounded-xl mb-6">
+                ${['easy', 'medium', 'hard'].map(d => `
+                    <button onclick="state.difficulty = '${d}'; render();" class="flex-1 py-2 rounded-lg font-bold transition ${state.difficulty === d ? 'bg-primary text-white shadow-lg' : 'text-gray-400'}">${t(d)}</button>
+                `).join('')}
+            </div>
+        `;
+
+        container.innerHTML = `
+            <div class="flex flex-col h-full w-full slide-up">
+                <h2 class="text-2xl font-bold text-center mb-4">${t('gamesTitle')}</h2>
+                ${diffSelector}
+                
+                <div class="grid grid-cols-2 gap-4 flex-1 overflow-y-auto pb-4 px-1">
+                    ${gamesList.map(g => `
+                        <button onclick="prepareGame('${g.id}')" class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center gap-2 hover:bg-gray-800 transition transform hover:scale-105">
+                            <span class="text-4xl">${g.icon}</span>
+                            <span class="font-bold text-sm text-center">${t(g.id)}</span>
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    function renderWheel(container) {
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full slide-up">
+                <h2 class="text-3xl font-bold mb-8">${t('whoAnswers')}</h2>
+                <div class="wheel-container mb-12">
+                    <div class="wheel-pointer"></div>
+                    <div id="roulette-wheel" class="wheel"></div>
+                </div>
+                <button id="spin-btn" class="btn-primary text-2xl font-bold py-4 px-12 rounded-full animate-pulse-fast">
+                    ${t('spin')}
+                </button>
+            </div>
+        `;
+
+        const wheel = document.getElementById('roulette-wheel');
+        const numSlices = state.players.length;
+        const sliceAngle = 360 / numSlices;
+        const colors = ['#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
+
+        state.players.forEach((p, i) => {
+            const slice = document.createElement('div');
+            slice.className = 'wheel-slice';
+            slice.style.backgroundColor = colors[i % colors.length];
+            slice.style.transform = `rotate(${i * sliceAngle}deg)`;
+            // Complex CSS to make slices look right, simplified for this env:
+            // Using a hack for simple rendering: Just render text positioned around center
+            slice.innerHTML = `<span class="absolute right-4 font-bold text-lg" style="transform: rotate(${sliceAngle/2}deg);">${p.name}</span>`;
+            
+            // Better wheel rendering approach for dynamic slices:
+            slice.style.clipPath = `polygon(0 0, 100% 0, 100% 100%, 0 100%)`; // Reset default
+            // True conic gradient is better for pure CSS wheels
+        });
+
+        // Simpler, cleaner Conic Gradient Wheel approach:
+        let conicStops = state.players.map((p, i) => {
+            const start = i * sliceAngle;
+            const end = (i + 1) * sliceAngle;
+            return `${colors[i % colors.length]} ${start}deg ${end}deg`;
+        }).join(', ');
+        
+        wheel.style.background = `conic-gradient(${conicStops})`;
+        
+        // Add names on top
+        state.players.forEach((p, i) => {
+            const angle = (i * sliceAngle) + (sliceAngle / 2);
+            const text = document.createElement('div');
+            text.style.position = 'absolute';
+            text.style.top = '50%'; text.style.left = '50%';
+            text.style.transform = `translate(-50%, -50%) rotate(${angle}deg) translateY(-100px)`;
+            text.style.fontWeight = 'bold';
+            text.style.textShadow = '1px 1px 4px black';
+            text.innerText = p.name;
+            wheel.appendChild(text);
+        });
+
+        let isSpinning = false;
+        document.getElementById('spin-btn').onclick = () => {
+            if(isSpinning) return;
+            isSpinning = true;
+            playSound('spin'); // Rapid sound ideally, simplified here
+            
+            // Random spin
+            const targetIndex = Math.floor(Math.random() * numSlices);
+            // Calculate rotation to land on target (account for pointer at top (0 deg))
+            const targetRotation = (360 * 5) - (targetIndex * sliceAngle) - (sliceAngle / 2); // 5 full spins + target
+            
+            wheel.style.transition = 'transform 3s cubic-bezier(0.2, 0.8, 0.2, 1)';
+            wheel.style.transform = `rotate(${targetRotation}deg)`;
+
+            let tickInterval = setInterval(() => playSound('tick'), 200);
+
+            setTimeout(() => {
+                clearInterval(tickInterval);
+                playSound('correct');
+                onPlayerSelected(targetIndex);
+            }, 3000);
+        };
+    }
+
+    function renderPassPhone(container) {
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full space-y-8 slide-up text-center px-4">
+                <div class="text-8xl animate-bounce-slight">📱</div>
+                <div>
+                    <h2 class="text-2xl text-gray-400 mb-2">${t('passPhone')}</h2>
+                    <h1 class="text-5xl font-black text-accent">${state.players[state.currentPlayerIndex].name}</h1>
+                </div>
+                
+                <div class="glass-panel p-6 rounded-2xl border-accent border w-full max-w-sm mt-8">
+                    <p class="text-xl mb-6">${t('ready')}</p>
+                    <button onclick="launchSelectedGame()" class="btn-primary w-full py-4 rounded-xl font-bold text-2xl">
+                        ${t('continue')}
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderLoading(container) {
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full space-y-6">
+                <div class="text-6xl animate-pulse">🤖</div>
+                <h2 class="text-2xl font-bold text-center">${t('aiLoading')}</h2>
+                <div class="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+            </div>
+        `;
+    }
+
+    function renderHowToPlay(container) {
+        let instructions = "";
+        let timeLimit = state.difficulty === 'easy' ? 30 : (state.difficulty === 'medium' ? 20 : 15);
+        state.currentGameTime = timeLimit;
+
+        switch(state.selectedGame) {
+            case 'g1': instructions = "جاوب على اللغز أو السؤال بسرعة. كل ما كنت أسرع، نقطك هتبقى أكتر!"; break;
+            case 'g2': instructions = "أقنع الباقيين إن دي الحقيقة. (نسخة مبسطة: اختار الإجابة الصح من الخيارات المضروبة اللي عملها الـAI)"; break;
+            case 'g3': instructions = "ارسم الكلمة اللي هتظهرلك، والباقي يخمنوا. دوس صح لما حد يخمنها."; break;
+            case 'g4': instructions = "قول أكبر عدد من الكلمات في التصنيف، بس إياك تستخدم الحرف الممنوع!"; break;
+            case 'g5': instructions = "ركز في الأشكال اللي هتظهر ثواني وتختفي، وجاوب على سؤال الذاكرة."; break;
+            case 'g6': instructions = "خليك جاهز.. ولما الشاشة تنور أخضر، اضغط بأسرع ما عندك!"; break;
+            case 'g7': instructions = "الكلمة هتظهر للناس كلها ما عدا إنت. اسألهم أسئلة إجابتها (أيوة/لأ) عشان تعرف إنت مين."; break;
+            case 'g8': instructions = "اشرح الكلمة لفريقك من غير ما تنطق الكلمات الممنوعة اللي تحتها."; break;
+            case 'g9': instructions = "اختار صندوق وحظك بقى! ممكن تكسب كتير أو تخسر."; break;
+            case 'g10': instructions = "سؤال سريع، لو غلطت هتخسر قلب. آخر واحد بقلوب هو الكسبان!"; break;
+        }
+
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full slide-up px-4 text-center">
+                <div class="text-6xl mb-4">${gamesList.find(g=>g.id===state.selectedGame).icon}</div>
+                <h1 class="text-4xl font-black mb-2 text-primary">${t(state.selectedGame)}</h1>
+                
+                <div class="glass-panel p-6 rounded-2xl w-full max-w-sm my-8">
+                    <h3 class="text-accent font-bold mb-4 border-b border-gray-700 pb-2">${t('howToPlay')}</h3>
+                    <p class="text-xl leading-relaxed">${instructions}</p>
+                    <div class="mt-4 flex items-center justify-center gap-2 text-gray-400">
+                        <span>⏱️ الوقت: ${timeLimit} ثانية</span>
+                        <span>|</span>
+                        <span>🧠 ${t(state.difficulty)}</span>
+                    </div>
+                </div>
+                
+                <button onclick="changeView('gameActive')" class="btn-primary w-full max-w-sm py-4 rounded-xl font-bold text-2xl">
+                    ${t('startGame')}
+                </button>
+            </div>
+        `;
+    }
+
+    // Main Game Active Renderer Router
+    function renderActiveGame(container) {
+        // Base container for game content
+        container.innerHTML = `
+            <div class="w-full flex justify-between items-center mb-4 px-4 bg-gray-800/60 rounded-2xl py-3 border border-gray-700 shadow-lg">
+                <button id="quit-game-btn" class="text-3xl hover:scale-110 transition drop-shadow-md">🚪</button>
+                <div class="text-xl font-bold flex-1 text-center truncate mx-2">${state.players[state.currentPlayerIndex].name}</div>
+                <div id="game-timer" class="text-3xl font-black text-accent w-12 text-center">${state.currentGameTime}</div>
+            </div>
+            <div id="game-area" class="flex-1 w-full flex flex-col items-center justify-center relative"></div>
+        `;
+        
+        const area = document.getElementById('game-area');
+        
+        document.getElementById('quit-game-btn').onclick = () => {
+            playSound('click');
+            if (confirm(state.lang === 'ar' ? 'متأكد إنك عايز تخرج وتختار لعبة تانية؟' : 'Are you sure you want to exit and choose another game?')) {
+                clearInterval(window.activeGameTimer);
+                changeView('games');
+            }
+        };
+        
+        // Timer Logic
+        let timeLeft = state.currentGameTime;
+        
+        const startTimer = () => {
+            window.activeGameTimer = setInterval(() => {
+                timeLeft--;
+                const timerEl = document.getElementById('game-timer');
+                if(timerEl) {
+                    timerEl.innerText = timeLeft;
+                    if(timeLeft <= 5) {
+                        timerEl.classList.add('text-red-500', 'animate-pulse');
+                        playSound('tick');
+                    }
+                }
+                
+                if (timeLeft <= 0) {
+                    clearInterval(window.activeGameTimer);
+                    finishRound(0, t('timeUp'));
+                }
+            }, 1000);
+        };
+
+        const stopTimerAndScore = (isCorrect) => {
+            clearInterval(window.activeGameTimer);
+            const res = calculateScore(timeLeft, state.currentGameTime, isCorrect);
+            finishRound(res.points, res.text);
+        };
+
+        // Render Specific Game Logic
+        switch(state.selectedGame) {
+            case 'g1': // Think It (Riddle)
+                area.innerHTML = `
+                    <div class="glass-panel p-6 rounded-2xl w-full text-center slide-up">
+                        <h2 class="text-2xl mb-8 leading-relaxed">${state.gameData.q}</h2>
+                        <div id="answer-area" class="hidden">
+                            <h3 class="text-accent text-lg mb-2">الإجابة:</h3>
+                            <p class="text-3xl font-bold">${state.gameData.a}</p>
+                        </div>
+                        <div class="flex gap-4 mt-8" id="action-btns">
+                            <button onclick="document.getElementById('answer-area').classList.remove('hidden'); this.parentElement.innerHTML = '<button onclick=\\'arguments[0](true)\\' class=\\'bg-green-500 flex-1 py-4 rounded-xl font-bold text-xl\\'>صح</button><button onclick=\\'arguments[0](false)\\' class=\\'bg-red-500 flex-1 py-4 rounded-xl font-bold text-xl\\'>غلط</button>';" class="btn-primary w-full py-4 rounded-xl font-bold text-xl">إظهار الإجابة</button>
+                        </div>
+                    </div>
+                `;
+                // Hooking up the buttons injected dynamically above
+                area.querySelector('#action-btns').addEventListener('click', (e) => {
+                     if(e.target.innerText === 'صح') stopTimerAndScore(true);
+                     if(e.target.innerText === 'غلط') stopTimerAndScore(false);
+                });
+                startTimer();
+                break;
+                
+            case 'g8': // Taboo
+                area.innerHTML = `
+                    <div class="glass-panel p-8 rounded-2xl w-full text-center slide-up border-2 border-primary shadow-[0_0_20px_rgba(109,40,217,0.5)]">
+                        <div class="text-gray-400 mb-2">الكلمة الهدف:</div>
+                        <h1 class="text-5xl font-black mb-8">${state.gameData.target}</h1>
+                        <div class="bg-red-500/20 rounded-xl p-4 border border-red-500/50">
+                            <div class="text-red-400 font-bold mb-3 text-sm">ممنوع تقول:</div>
+                            <div class="flex flex-wrap justify-center gap-2">
+                                ${state.gameData.forbidden.map(w => `<span class="bg-red-600 px-3 py-1 rounded-full text-lg">${w}</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="flex gap-4 mt-8">
+                            <button onclick="arguments[0](true)" class="bg-green-500 flex-1 py-4 rounded-xl font-bold text-xl">عرفوها! ✅</button>
+                            <button onclick="arguments[0](false)" class="bg-red-500 flex-1 py-4 rounded-xl font-bold text-xl">استسلم ❌</button>
+                        </div>
+                    </div>
+                `;
+                area.querySelectorAll('button').forEach(b => b.onclick = () => stopTimerAndScore(b.innerText.includes('عرفوها')));
+                startTimer();
+                break;
+
+            case 'g3': // Draw It
+                area.innerHTML = `
+                    <div class="w-full flex flex-col items-center h-full">
+                        <div class="text-2xl mb-2">ارسم: <span class="font-bold text-accent">${state.gameData.q || "قطة"}</span></div>
+                        <canvas id="draw-canvas" class="w-full flex-1 mb-4" width="300" height="400"></canvas>
+                        <div class="flex gap-2 w-full">
+                            <button id="clear-btn" class="bg-gray-700 py-3 px-4 rounded-xl font-bold">مسح</button>
+                            <button onclick="arguments[0](true)" class="bg-green-500 flex-1 py-3 rounded-xl font-bold text-xl">خمّنوها! ✅</button>
+                        </div>
+                    </div>
+                `;
+                
+                // Canvas Drawing Logic
+                setTimeout(() => {
+                    const canvas = document.getElementById('draw-canvas');
+                    const ctx = canvas.getContext('2d');
+                    ctx.strokeStyle = 'black';
+                    ctx.lineWidth = 3;
+                    ctx.lineCap = 'round';
+                    
+                    let isDrawing = false;
+                    
+                    const startPos = (e) => {
+                        isDrawing = true;
+                        draw(e);
+                    };
+                    const endPos = () => {
+                        isDrawing = false;
+                        ctx.beginPath();
+                    };
+                    const draw = (e) => {
+                        if (!isDrawing) return;
+                        e.preventDefault(); // prevent scrolling
+                        
+                        const rect = canvas.getBoundingClientRect();
+                        let x = e.clientX || e.touches[0].clientX;
+                        let y = e.clientY || e.touches[0].clientY;
+                        
+                        ctx.lineTo(x - rect.left, y - rect.top);
+                        ctx.stroke();
+                        ctx.beginPath();
+                        ctx.moveTo(x - rect.left, y - rect.top);
+                    };
+
+                    canvas.addEventListener('mousedown', startPos);
+                    canvas.addEventListener('mouseup', endPos);
+                    canvas.addEventListener('mousemove', draw);
+                    canvas.addEventListener('touchstart', startPos);
+                    canvas.addEventListener('touchend', endPos);
+                    canvas.addEventListener('touchmove', draw);
+                    
+                    document.getElementById('clear-btn').onclick = () => {
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    };
+                }, 100);
+
+                area.querySelector('.bg-green-500').onclick = () => stopTimerAndScore(true);
+                startTimer();
+                break;
+                
+            case 'g6': // Reaction
+                clearInterval(window.activeGameTimer); // No normal timer
+                document.getElementById('game-timer').style.display = 'none';
+                area.innerHTML = `
+                    <div id="reaction-btn" class="w-full h-64 bg-red-600 rounded-3xl flex items-center justify-center text-4xl font-bold shadow-lg transition-colors cursor-pointer select-none">
+                        استنى...
+                    </div>
+                `;
+                
+                const rBtn = document.getElementById('reaction-btn');
+                let startTime;
+                let isGreen = false;
+                let clickedTooEarly = false;
+                
+                const delay = Math.random() * 3000 + 2000; // 2-5 seconds
+                
+                const turnGreen = setTimeout(() => {
+                    if(clickedTooEarly) return;
+                    isGreen = true;
+                    rBtn.classList.replace('bg-red-600', 'bg-green-500');
+                    rBtn.innerText = "اضغط دلوقتي!!";
+                    startTime = Date.now();
+                }, delay);
+
+                rBtn.onmousedown = rBtn.ontouchstart = (e) => {
+                    e.preventDefault();
+                    if(!isGreen) {
+                        clickedTooEarly = true;
+                        clearTimeout(turnGreen);
+                        rBtn.innerText = "استعجلت! ❌";
+                        setTimeout(() => finishRound(0, "استعجلت جداً!"), 1000);
+                    } else {
+                        const reactionTime = Date.now() - startTime;
+                        let pts = 100;
+                        if(reactionTime > 300) pts = 80;
+                        if(reactionTime > 500) pts = 50;
+                        if(reactionTime > 1000) pts = 20;
+                        finishRound(pts, `رد فعل في ${reactionTime}ms ⚡`);
+                    }
+                };
+                break;
+
+            default:
+                // Generic fallback for unimplemented mini-games for this demo
+                area.innerHTML = `
+                    <div class="glass-panel p-6 rounded-2xl w-full text-center">
+                        <h2 class="text-2xl mb-8">لعبة تحت الإنشاء (Demo)</h2>
+                        <button onclick="arguments[0](true)" class="btn-primary py-3 px-8 rounded-xl font-bold text-xl w-full mb-4">كسب</button>
+                        <button onclick="arguments[0](false)" class="bg-gray-700 py-3 px-8 rounded-xl font-bold w-full">خسر</button>
+                    </div>
+                `;
+                area.querySelectorAll('button').forEach(b => b.onclick = () => stopTimerAndScore(b.innerText === 'كسب'));
+                startTimer();
+                break;
+        }
+    }
+
+    function showScorePopup(msg, callback) {
+        const modal = document.getElementById('modal-container');
+        modal.innerHTML = `
+            <div class="glass-panel p-8 rounded-3xl text-center max-w-sm w-full transform transition-all scale-105 border-2 border-primary shadow-[0_0_30px_rgba(109,40,217,0.6)]">
+                <div class="text-6xl mb-4 ${msg.includes('+') ? 'animate-bounce-slight' : 'shake'}">
+                    ${msg.includes('+') ? '🎉' : '😅'}
+                </div>
+                <h2 class="text-3xl font-black mb-6">${msg}</h2>
+                <button id="modal-next-btn" class="btn-primary w-full py-4 rounded-xl font-bold text-xl">${t('next')}</button>
+            </div>
+        `;
+        modal.classList.remove('hidden');
+        
+        if(msg.includes('+')) {
+            createConfetti();
+            playSound('win');
+        }
+
+        document.getElementById('modal-next-btn').onclick = () => {
+            modal.classList.add('hidden');
+            callback();
+        };
+    }
+
+    function createConfetti() {
+        for(let i=0; i<50; i++) {
+            const conf = document.createElement('div');
+            conf.className = 'confetti';
+            conf.style.left = Math.random() * 100 + 'vw';
+            conf.style.top = -10 + 'px';
+            conf.style.backgroundColor = ['#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b'][Math.floor(Math.random()*5)];
+            conf.style.animationDuration = (Math.random() * 2 + 1) + 's';
+            document.body.appendChild(conf);
+            setTimeout(() => conf.remove(), 3000);
+        }
+    }
+
+    function renderScoreboard(container) {
+        // Sort players by score for display
+        const sorted = [...state.players].sort((a,b) => b.score - a.score);
+        
+        container.innerHTML = `
+            <div class="flex flex-col h-full w-full slide-up">
+                <h2 class="text-3xl font-bold text-center mb-6">${t('score')}</h2>
+                
+                <div class="flex-1 overflow-y-auto space-y-3 pb-4 px-2">
+                    ${sorted.map((p, i) => `
+                        <div class="glass-panel p-4 rounded-2xl flex items-center justify-between relative overflow-hidden ${p.id === state.players[state.currentPlayerIndex].id ? 'border-2 border-primary shadow-[0_0_15px_rgba(109,40,217,0.4)]' : ''}">
+                            <div class="flex items-center gap-4 relative z-10">
+                                <span class="text-3xl">${i===0?'🥇':i===1?'🥈':i===2?'🥉':''}</span>
+                                <span class="font-bold text-xl">${p.name}</span>
+                            </div>
+                            <span class="font-black text-2xl text-accent relative z-10">${p.score} ⭐</span>
+                            ${i===0 ? `<div class="absolute inset-0 bg-gradient-to-r from-transparent via-primary/20 to-transparent animate-pulse-fast opacity-50"></div>` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="mt-auto pt-4 space-y-3">
+                    <button onclick="changeView('games')" class="btn-primary w-full py-4 rounded-xl font-bold text-xl">لعبة جديدة</button>
+                    <button onclick="changeView('consequence')" class="glass-panel w-full py-3 rounded-xl font-bold text-gray-300 hover:text-white border border-red-500/30 hover:border-red-500 hover:bg-red-500/10 transition">نهي اللعبة والعواقب 😈</button>
+                </div>
+            </div>
+        `;
+    }
+
+    function renderConsequence(container) {
+        const sorted = [...state.players].sort((a,b) => a.score - b.score);
+        const loser = sorted[0]; // Lowest score
+        
+        const list = consequencesList[state.lang];
+        let currentConsequence = list[Math.floor(Math.random() * list.length)];
+
+        container.innerHTML = `
+            <div class="flex flex-col items-center justify-center h-full w-full slide-up text-center px-4">
+                <h2 class="text-2xl text-gray-400 mb-2">${t('loser')}</h2>
+                <h1 class="text-5xl font-black text-red-500 mb-8 drop-shadow-[0_0_10px_rgba(239,68,68,0.8)]">${loser.name}</h1>
+                
+                <h3 class="text-xl mb-4">${t('consequenceWheel')}</h3>
+                
+                <div class="glass-panel p-8 rounded-3xl w-full border border-gray-600 mb-8 relative min-h-[150px] flex items-center justify-center">
+                    <p id="cons-text" class="text-2xl font-bold leading-relaxed">${currentConsequence}</p>
+                </div>
+                
+                <div class="flex gap-4 w-full">
+                    <button id="reroll-btn" class="bg-gray-800 flex-1 py-4 rounded-xl font-bold border border-gray-600">${t('anotherConsequence')}</button>
+                    <button onclick="changeView('home'); state.players.forEach(p=>p.score=0);" class="btn-primary flex-1 py-4 rounded-xl font-bold">${t('mainMenu')}</button>
+                </div>
+            </div>
+        `;
+
+        document.getElementById('reroll-btn').onclick = () => {
+            playSound('spin');
+            const el = document.getElementById('cons-text');
+            el.classList.add('opacity-0');
+            setTimeout(() => {
+                currentConsequence = list[Math.floor(Math.random() * list.length)];
+                el.innerText = currentConsequence;
+                el.classList.remove('opacity-0');
+                el.classList.add('fade-in');
+            }, 200);
+        };
+    }
+
+    // --- Init ---
+    window.onload = () => {
+        setLang(state.lang); // Triggers render
+    };
+
+</script>
+</body>
+</html>
